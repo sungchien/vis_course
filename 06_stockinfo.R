@@ -2,6 +2,39 @@ library(tidyverse)
 library(curl)
 library(rvest)
 
+# Yahoo!奇摩股票網頁網址
+addr <- "https://tw.stock.yahoo.com/"
+session <- html_session(addr)
+
+# 擷取半導體類股網頁
+cat_page <- jump_to(session,
+                    "h/kimosel.php?form=menu&form_id=stock_id&form_name=stock_name")
+ 
+if (readline(prompt="選擇半導體(y)或其他類股(n):")=="n") {
+  # 擷取類股名稱表格
+  cat_link <- html_nodes(cat_page,
+                         xpath='//table[@cellpadding="2"]/tr/td/a')
+
+  # 類股名稱
+  cat_name <- html_text(cat_link)
+  # 類股網址
+  cat_addr <- html_attr(cat_link, "href")
+
+  # 等待使用者選擇類股
+  select_addr <- cat_addr[menu(cat_name)]
+
+  # 進入類股網頁
+  cat_page <- jump_to(session, select_addr)
+}
+
+stock_id_txt <- html_nodes(cat_page, 'a.none') %>% # 取得個股節點
+  html_text() %>% # 檢出個股文字資料
+  strsplit("[[:space:]]")
+
+# 取出個股編號與名稱
+stock_info <- data.frame(id=sapply(stock_id_txt, `[`, 2),
+                         name=sapply(stock_id_txt, `[`, 3))
+
 # 以每一支股票的編號查詢取回個股交易的資料
 getStockInfo <- function (id) {
   # 取回yahoo股票上的各股票網頁的HTML碼
@@ -12,16 +45,15 @@ getStockInfo <- function (id) {
   # 設定HTML碼的編碼為big5
   Encoding(pos_stock_text) <- "big5"
   
-  pos_table_nodes <- iconv(pos_stock_text, "big5", "UTF-8") %>% # 將big5轉換成UTF-8
+  table_node <- iconv(pos_stock_text, "big5", "UTF-8") %>% # 將big5轉換成UTF-8
     read_html()%>%                          # 利用rvest的HTML抓取功能
-    html_nodes(css="table")                 # 抓取網頁上所有表格
+    html_node(xpath='//table[@border="2"]') # 抓取個股資料表格
   
-
-  st_data <- pos_table_nodes[html_attr(pos_table_nodes, "border")=="2"] %>% # 個股資料
+  st_data <- table_node %>%                 # 個股資料表格
     html_nodes(css="td") %>%                # 表格上各格上的資料
     html_text()                             # 取得資料文字
   
-  st_fields <- pos_table_nodes[html_attr(pos_table_nodes, "border")=="2"] %>%
+  st_fields <- table_node %>%
     html_nodes(css="th") %>%                # 表格上各格上的各欄位名稱
     html_text()                             # 取得欄位名稱
   
@@ -30,28 +62,6 @@ getStockInfo <- function (id) {
   
   return(st_data)
 }
-
-
-# 取回某一類股上所有個股的交易資料
-cat <- "通信網路"           # 設定類股
-cat_url <- curl_escape(cat) # 將中文文字轉成URL上的編碼方式
-raw_html_txt <- paste0("https://tw.stock.yahoo.com/h/kimosel.php?tse=1&cat=",
-       cat_url, "&form=menu&form_id=stock_id&form_name=stock_name&domain=0") %>%
-  readLines() %>%           # 取回類股網頁資料
-  paste(collapse="\n")
-
-# 設定HTML碼的編碼為big5
-Encoding(raw_html_txt) <- "big5"
-
-stock_id_txt <- iconv(raw_html_txt, "big5", "UTF-8") %>%  # 將big5轉換成UTF-8
-  read_html()%>%                         # 利用rvest的HTML抓取功能
-  html_nodes(css="a.none") %>%           # 抓取網頁上所有連結(其class屬性為"none")
-  html_text() %>%                        # 取得連結上的文字
-  strsplit("[[:space:]]")                # 依據空白和和換行符號切分文字資料
-
-# 取出個股編號與名稱
-stock_info <- data.frame(id=sapply(stock_id_txt, function (x) x[2]),
-                         name=sapply(stock_id_txt, function (x) x[3]))
 
 stock_df <- sapply(stock_info$id, getStockInfo) %>% # 利用個股編號取出交易資料
   t() %>%                                           # 轉置矩陣
