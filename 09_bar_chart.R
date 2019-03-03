@@ -33,7 +33,7 @@ tdf <- tdf %>%
 tdf <- tdf %>%
   mutate(value=ifelse(grepl("^[0-9]+$", value), as.integer(value), 0))
 
-#
+# 變更較不適合處理的Variable名稱
 tdf <- tdf %>%
   rename(dn = `日間∕進修別`)
 
@@ -42,7 +42,7 @@ tdf <- tdf %>%
 # 比較106學年度不同等級學生人數
 # 類別屬性：每個等級, 數值屬性：學生人數
 
-tdf %>%
+aca_sys_std_no <- tdf %>%
   filter(year==106) %>%             # 取出106學年資料
   group_by(等級別) %>%              # 依據等級分群
   summarise(value.sum=sum(value)) %>% # 統計各等級學生人數
@@ -52,34 +52,20 @@ tdf %>%
 # ggplot
 # aes(x, y)
 # geom_col
+ggplot(aca_sys_std_no, aes(x=等級別, y=value.sum)) +  # 畫出長條圖
+  geom_col()
+
+# 依照各等級人數，設定大小順序
+aca_sys_std_no <- aca_sys_std_no %>%
+  mutate(等級別=factor(等級別, levels=等級別))
+
+# 以ggplot2畫出長條圖
+# ggplot
+# aes(x, y)
+# geom_col
 # scale_y_continuous
 # theme
-tdf %>%
-  filter(year==106) %>%             # 取出106學年資料
-  group_by(等級別) %>%              # 依據等級分群
-  summarise(value.sum=sum(value)) %>% # 統計各等級大一學生人數
-  arrange(desc(value.sum)) %>%      # 將等級依據學生人數由大到小排序
-  ggplot(aes(x=等級別, y=value.sum)) +  # 畫出長條圖
-  geom_col(color="black", fill="white") +
-  scale_y_continuous(breaks=seq(0, 500000, 100000)) +
-  labs(y="學生人數", title="106學年度不同等級學生人數比較") +
-  theme(axis.text.x = element_text(angle=60, hjust=1, color="black"),
-        axis.text.y = element_text(color="black"),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.major.y = element_line(color="grey80"),
-        panel.grid.minor.y = element_line(color="grey90"))
-
-# 比較106學年度不同等級學生人數 (加入各等級依據學生人數排序)
-# 依據學生人數由大到小排序
-# 設定各等級大小順序
-tdf %>%
-  filter(year==106) %>%             # 取出106學年資料
-  group_by(等級別) %>%              # 依據等級分群
-  summarise(value.sum=sum(value)) %>% # 統計各等級大一學生人數
-  arrange(desc(value.sum)) %>%      # 依據學生人數由大到小排序
-  mutate(等級別=factor(等級別, levels=等級別)) %>% # 設定各等級大小順序
-  ggplot(aes(x=等級別, y=value.sum)) +  # 畫出長條圖
+ggplot(aca_sys_std_no, aes(x=等級別, y=value.sum)) +  # 畫出長條圖
   geom_col(color="black", fill="white") +
   scale_y_continuous(breaks=seq(0, 500000, 100000)) +
   labs(y="學生人數", title="106學年度不同等級學生人數比較") +

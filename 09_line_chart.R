@@ -6,7 +6,8 @@
 # 每個個體對應到圖上的一個點，線是將每一個點按照某一個屬性的次序相連
 # x軸: 能按照大小次序排列的屬性。 y軸：數值屬性
 #
-# 特別注意事項：大多數情況下，x軸上使用時間相關屬性，表示y軸上的數值屬性依照時間的變化
+# 特別注意事項：大多數情況下，x軸上使用時間相關屬性
+#               表示y軸上的數值屬性依照時間的變化
 #############################################
 library(tidyverse)
 library(readr)
@@ -32,7 +33,7 @@ tdf <- tdf %>%
 tdf <- tdf %>%
   mutate(value=ifelse(grepl("^[0-9]+$", value), as.integer(value), 0))
 
-#
+# 變更較不適合處理的Variable名稱
 tdf <- tdf %>%
   rename(dn = `日間∕進修別`)
 
@@ -42,7 +43,7 @@ tdf <- tdf %>%
 # 個體：各學年度大一學生資料
 # 可排序之屬性：學年度, 數值屬性：學生人數
 
-tdf %>%
+std_no_per_year <- tdf %>%
   filter(grepl("B", 等級別)) %>%      # 取出學士與四技學生資料
   filter(grepl("一年級", key)) %>%    # 取出一年級學生資料
   group_by(year) %>%                  # 依據學年度分群
@@ -56,13 +57,7 @@ tdf %>%
 # scale_x_continuous
 # scale_y_continuous
 # theme
-tdf %>%
-  filter(grepl("B", 等級別)) %>%   # 取出學士與四技學生資料
-  filter(grepl("一年級", key)) %>%  # 取出一年級學生資料
-  group_by(year) %>%                # 依據學年度分群
-  summarise(value.sum=sum(value)) %>%  # 統計103到106學年度大一學生人數
-  ungroup() %>%
-  ggplot(aes(x=year, y=value.sum)) + # 畫出折線圖
+ggplot(std_no_per_year, aes(x=year, y=value.sum)) + # 畫出折線圖
   geom_line() +
   geom_point() +
   scale_x_continuous(minor_breaks = NULL) +

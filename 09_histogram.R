@@ -33,7 +33,7 @@ tdf <- tdf %>%
 tdf <- tdf %>%
   mutate(value=ifelse(grepl("^[0-9]+$", value), as.integer(value), 0))
 
-#
+# 變更較不適合處理的Variable名稱
 tdf <- tdf %>%
   rename(dn = `日間∕進修別`)
 
@@ -42,7 +42,7 @@ tdf <- tdf %>%
 # 示範範例
 # 106學年各科系大一學生人數分布情形
 # 個體：各大學各科系大一學生資料, 數值屬性：學生人數
-tdf %>%
+ dpt_std_no <- tdf %>%
   filter(year==106) %>%             # 取出106學年資料
   filter(grepl("B", 等級別)) %>%      # 取出大學部資料
   filter(grepl("^一年級", key)) %>% # 取出一年級學生資料
@@ -59,23 +59,17 @@ tdf %>%
 # scale_y_continuous
 # theme
 
-tdf %>%
-  filter(year==106) %>%             # 取出106學年資料
-  filter(grepl("B", 等級別)) %>%      # 取出大學部資料
-  filter(grepl("^一年級", key)) %>% # 取出一年級學生資料
-  group_by(學校名稱, 科系名稱) %>%  # 依據學校與科系分群
-  summarise(value.sum = sum(value)) %>% # 統計各科系大一學生人數
-  ungroup() %>%
-  ggplot(aes(x=value.sum)) +        # 畫出直方圖
-  geom_histogram(breaks=seq(0, 700, 50), fill="white", color="black") +  # 設定直方圖的區間
-  scale_x_continuous(breaks=seq(0, 700, 50), minor_breaks = NULL) +
-  scale_y_continuous(breaks=seq(0, 1400, 200)) +
-  labs(title="106學年度各科系大一學生人數分布情形", x="各科系大一學生人數", y="科系數") +
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.major.y = element_line(color="grey80"),
-        panel.grid.minor.y = element_line(color="grey90"))
+  ggplot(dpt_std_no, aes(x=value.sum)) +        # 畫出直方圖
+    geom_histogram(breaks=seq(0, 700, 50), fill="white", color="black") + # 設定直方圖區間
+    scale_x_continuous(breaks=seq(0, 700, 50), minor_breaks = NULL) +
+    scale_y_continuous(breaks=seq(0, 1400, 200)) +
+    labs(title="106學年度各科系大一學生人數分布情形",
+         x="各科系大一學生人數", y="科系數") +
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          panel.background = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color="grey80"),
+          panel.grid.minor.y = element_line(color="grey90"))
 
 ########################################################################
 # 練習
