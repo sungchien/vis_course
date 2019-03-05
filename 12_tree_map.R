@@ -66,8 +66,9 @@ ggplot(shu_std_no, aes(area=total_value, fill=sex_ratio, label=科系名稱)) +
   geom_treemap() +
   geom_treemap_text(place = "centre", color="black") +
   labs(title="世新大學106學年各系大一男女生人數比較") +
-  scale_fill_distiller(palette="RdBu",
-                       limits=c(-1.0, 1.0), name="女男人數差比例")
+  scale_fill_gradient2(low="blue", high="red",
+                        limits=c(-1.0, 1.0),
+                        name="女男人數差比例")
   
 
 ########################################################################

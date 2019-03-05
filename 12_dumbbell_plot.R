@@ -71,7 +71,9 @@ ggplot(shu_std_no) +
   labs(title="世新大學106學年各系大一男女生人數比較",
        x="大一學生人數") +
   scale_x_continuous(breaks=seq(0, 200, 20)) +
-  scale_color_distiller(palette="RdBu") +
+  scale_color_gradient2(low="blue", high="red",
+                        limits=c(-1.0, 1.0),
+                        name="女男人數差比例") +
   theme(panel.background = element_blank(),
         panel.grid.major.x = element_line(color="grey80"),
         panel.grid.major.y = element_line(color="grey80"),
