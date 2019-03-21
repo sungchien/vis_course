@@ -35,7 +35,7 @@ tdf <- tdf %>%
 tdf <- tdf %>%
   mutate(value=ifelse(grepl("^[0-9]+$", value), as.integer(value), 0))
 
-#
+# 變更較不適合處理的Variable名稱
 tdf <- tdf %>%
   rename(dn = `日間∕進修別`)
 
@@ -66,7 +66,7 @@ std_rate<- tdf %>%
 # scale_fill_brewer(palette)
 # theme
 ggplot(std_rate)+ # 畫出圓餅圖
-  geom_col(aes(x="", y=rate, fill=std_type), width = 1) +
+  geom_col(aes(x=1, y=rate, fill=std_type), width = 1) +
   coord_polar(theta = "y", start=0) +
   labs(title="106學年學士班各等級別一年級男女生比例情形") +
   scale_fill_brewer(palette="Paired",
@@ -83,13 +83,14 @@ std_rate <- std_rate %>%
   mutate(y_pos=100-(cumsum(rate)-rate/2)) # 計算文字在圖形上的位置
   
 ggplot(std_rate)+ # 畫出圓餅圖
-  geom_col(aes(x="", y=rate, fill=std_type), width = 1) +
-  geom_text(aes(x="", y=y_pos,
+  geom_col(aes(x=1, y=rate, fill=std_type), width = 1) +
+  geom_text(aes(x=1, y=y_pos,
                 label=sprintf("%s\n%0.2f%%", std_type, rate))) +
   coord_polar(theta="y", start=0) +
   labs(title="106學年學士班各等級別一年級男女生比例情形") +
   scale_fill_brewer(palette="Paired", guide="none") +
   theme(axis.text.x=element_blank(),
+        axis.ticks = element_blank(),
         axis.title=element_blank(), axis.text=element_blank(),
         panel.border=element_blank(), panel.background = element_blank())
 
