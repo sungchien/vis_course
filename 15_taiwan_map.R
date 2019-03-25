@@ -7,15 +7,13 @@
 library(rgdal) # requires sp, will use proj.4 if installed
 library(ggplot2)
 library(tidyverse)
-library(readr)
-library(rvest)
 
 ###
 # 從data.gov.tw上下載臺灣鄉鎮市區界線圖，然後解壓縮
 # 臺灣鄉鎮市區界線圖是shapefile格式
 # 標註各鄉鎮市區的界線
 # 以下利用rgdal套件讀取shapefile檔案
-tw <- readOGR(dsn=".", layer="TOWN_MOI_1071226",
+tw <- readOGR(dsn="[[shapefile的路徑]]", layer="TOWN_MOI_1071226",
               encoding="UTF-8", use_iconv=TRUE,
               stringsAsFactors=FALSE)
 
@@ -32,7 +30,8 @@ tw.df <- left_join(tw@data, tw.ff, by = "id")
 # 根據鄉鎮市區的界線特徵點，利用geom_polygon畫出全臺灣的鄉鎮市區
 # 註：需要較大計算資源，可省略，直接使用各縣市資料
 ggplot() + 
-  geom_polygon(data=tw.df, aes(x=long, y=lat, group=group), fill="orange", color="black") +
+  geom_polygon(data=tw.df, aes(x=long, y=lat, group=group),
+               fill="orange", color="black") +
   coord_equal() +
   scale_x_continuous(NULL, breaks=NULL) +
   scale_y_continuous(NULL, breaks=NULL) +
@@ -46,14 +45,16 @@ county = "臺北市"
 county.df = tw.df[tw.df$COUNTYNAME==county,]
 county.data <- tw.data[tw.data$COUNTYNAME==county,]
 
-# 利用ggplot2的sclae_fill_hue函數將各鄉鎮市區填上不同色調的顏色
+# 利用ggplot2的sclae_fill_brewer函數將各鄉鎮市區填上不同顏色
 ggplot() + 
-  geom_polygon(data=county.df, aes(x=long, y=lat, group=group, fill=group), color="blue") +
-  geom_text(data=county.data, aes(x=long_pos, y=lat_pos, label=TOWNNAME), color="blue") +
+  geom_polygon(data=county.df, aes(x=long, y=lat, group=group, fill=group),
+               color="blue") +
+  geom_text(data=county.data, aes(x=long_pos, y=lat_pos, label=TOWNNAME),
+            color="black") +
   coord_equal() +
   scale_x_continuous(NULL, breaks=NULL) +
   scale_y_continuous(NULL, breaks=NULL) +
-  scale_fill_hue(county) +
-  labs(title=paste0(county, "地圖")) +
+  scale_fill_brewer(palette="Paired") +
+  labs(title=paste0(county, "鄉鎮市區地圖")) +
   theme(title=element_text(size=20), legend.position = "none",
         panel.background = element_rect(fill="white"))
