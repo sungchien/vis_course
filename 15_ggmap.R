@@ -2,9 +2,12 @@
 # 利用google map繪製Dot Map
 # 把每一個臺北市的Youbike站點的位置繪出，並且表現出它們的熱門程度
 #
-# 注意：需要先加入google developer帳戶 (google cloud platform)
+# 注意：需要先加入google cloud platform帳戶
+# https://cloud.google.com/
 # 雖然需要信用卡帳戶，但第一年有300美元免費額度
+# 新增一個專案
 # 啟動至少Geocoding API和Map Static API
+# 建立憑證
 
 library(ggmap)      # 在ggplot2上使用google map的套件
 library(tidyverse)
