@@ -28,10 +28,18 @@ sightseeing <- read_excel("sightseeing.xlsx")
 # 數值屬性：觀光客人數
 
 sightseeing <- sightseeing %>%
-  gather(key="year", value="visitorCount", -地點)
+  mutate(fchi=regexpr("\r\n", 地點)) %>%
+  mutate(loc=substr(地點, 1, fchi-1)) %>%
+  select(2, 3, 5) %>%
+  gather(key="year", value="visitorCount", -loc)
+
+loc_rank <- sightseeing %>%
+  filter(year=="2020二月") %>%
+  arrange(desc(visitorCount)) %>%
+  pull(loc)
 
 sightseeing <- sightseeing %>%
-  rename(loc=地點)
+  mutate(loc=factor(loc, levels=loc_rank, ordered = TRUE))
 
 # 群組長條圖
 ggplot(sightseeing, aes(x=loc, y=visitorCount)) +
@@ -55,8 +63,9 @@ coord_radar <- function ()
 
 # 畫出雷達圖
 ggplot(sightseeing, aes(x=loc, y=visitorCount, group=year)) + 
-  geom_polygon(aes(color=year), fill=NA) +
-  coord_radar() +
+  geom_polygon(aes(color=year, fill=year)) +
+  geom_point(aes(x=loc, y=visitorCount)) +
+#  coord_radar() +
   labs(title="各景點前後兩年觀光客人數例") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
