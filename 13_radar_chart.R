@@ -34,17 +34,20 @@ sightseeing <- sightseeing %>%
   gather(key="year", value="visitorCount", -loc)
 
 loc_rank <- sightseeing %>%
-  filter(year=="2020二月") %>%
+  filter(year=="2019二月") %>%
   arrange(desc(visitorCount)) %>%
   pull(loc)
 
 sightseeing <- sightseeing %>%
-  mutate(loc=factor(loc, levels=loc_rank, ordered = TRUE))
+  mutate(year=factor(year)) %>%
+  mutate(loc=factor(loc, levels=loc_rank, ordered = TRUE)) %>%
+  arrange(year, loc)
 
 # 群組長條圖
 ggplot(sightseeing, aes(x=loc, y=visitorCount)) +
-  geom_col(aes(fill=year), position="dodge") +
+  geom_col(aes(color=year, fill=year), alpha=0.3, position="dodge") +
   labs(title="各景點前後兩年觀光客人數", x="景點", y="觀光客人數") +
+  scale_y_continuous(breaks=seq(0, 1000000, 200000))+
   theme(axis.text.x = element_text(color="black", angle=60, hjust=1),
         axis.text.y = element_text(color="black"),
         panel.background = element_blank(),
@@ -63,10 +66,10 @@ coord_radar <- function ()
 
 # 畫出雷達圖
 ggplot(sightseeing, aes(x=loc, y=visitorCount, group=year)) + 
-  geom_polygon(aes(color=year, fill=year)) +
-  geom_point(aes(x=loc, y=visitorCount)) +
-#  coord_radar() +
-  labs(title="各景點前後兩年觀光客人數例") +
+  geom_polygon(aes(color=year, fill=year), alpha=0.3) +
+  coord_radar() +
+  labs(title="各景點前後兩年觀光客人數") +
+  scale_y_continuous(breaks=seq(0, 1000000, 200000))+
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         panel.background = element_blank(),
