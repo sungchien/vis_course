@@ -13,60 +13,30 @@
 # 特別注意事項：分群的種類不可過多
 #############################################
 library(tidyverse)
-library(readr)
+library(readxl)
 library(ggplot2)
 
 # 資料輸入
-tdf <- data.frame()
-for (i in seq(103, 106)) {
-  fn = sprintf("http://stats.moe.gov.tw/files/detail/%3d/%3d_students.csv", i, i)
-  df <- read_csv(file=fn, col_types="cccccccccccccccccccccccc")
-  df$year <- i
-  tdf <- rbind(tdf, df)
-}
+sightseeing <- read_excel("sightseeing.xlsx")
 
-# 轉成tidy data format
-tdf <- tdf %>%
-  gather(key, value, c("一年級男生", "一年級女生", "二年級男生", "二年級女生",
-                       "三年級男生", "三年級女生", "四年級男生", "四年級女生", 
-                       "五年級男生", "五年級女生", "六年級男生", "六年級女生", 
-                       "七年級男生", "七年級女生", "延修生男生", "延修生女生"))
-
-# 將數值從character形式轉成integer形式
-tdf <- tdf %>%
-  mutate(value=ifelse(grepl("^[0-9]+$", value), as.integer(value), 0))
-
-# 變更較不適合處理的Variable名稱
-tdf <- tdf %>%
-  rename(dn = `日間∕進修別`)
- 
 ########################################################################
 # 示範案例
-# 比較106學年各體系碩士各年級人數比例
-# 個體：各體系碩士學生
-# 類別屬性一：各體系
-# 類別屬性二：年級
-# 數值屬性：人數比例
+# 比較各景點前後兩年觀光客人數
+# 個體：所有景點觀光客
+# 類別屬性一：各景點
+# 類別屬性二：前後兩年
+# 數值屬性：觀光客人數
 
-# 106學年各體系碩士各年級比例
-grade_lvl <- c("一年級", "二年級", "三年級", "四年級", "五年級(以上)")
-std <- tdf %>%
-  filter(year==106) %>%             # 取出106學年資料
-  filter(grepl("M", 等級別)) %>%      # 取出碩士班資料
-  mutate(grade=substr(key, 1, 3)) %>% # 產生年級屬性
-  mutate(grade=ifelse(grepl("[五六七延]", grade), "五年級(以上)", grade)) %>%
-  mutate(grade=factor(grade, levels=grade_lvl, ordered=TRUE)) %>%
-  group_by(體系別, grade) %>%        # 統計各體系各年級人數
-  summarise(value.sum=sum(value)) %>%
-  ungroup() %>%
-  group_by(體系別) %>%               # 計算各體系下各年級人數比例
-  mutate(rate=value.sum/sum(value.sum)) %>%
-  ungroup()
+sightseeing <- sightseeing %>%
+  gather(key="year", value="visitorCount", -地點)
+
+sightseeing <- sightseeing %>%
+  rename(loc=地點)
 
 # 群組長條圖
-ggplot(std, aes(x=grade, y=rate)) +
-  geom_col(aes(fill=體系別), position="dodge") +
-  labs(title="106學年各體系碩士各年級比例", x="年級", y="人數比例") +
+ggplot(sightseeing, aes(x=loc, y=visitorCount)) +
+  geom_col(aes(fill=year), position="dodge") +
+  labs(title="各景點前後兩年觀光客人數", x="景點", y="觀光客人數") +
   theme(axis.text.x = element_text(color="black", angle=60, hjust=1),
         axis.text.y = element_text(color="black"),
         panel.background = element_blank(),
@@ -84,10 +54,10 @@ coord_radar <- function ()
 }
 
 # 畫出雷達圖
-ggplot(std, aes(x=grade, y=rate, group=體系別)) + 
-  geom_polygon(aes(color=體系別), fill=NA) +
+ggplot(sightseeing, aes(x=loc, y=visitorCount, group=year)) + 
+  geom_polygon(aes(color=year), fill=NA) +
   coord_radar() +
-  labs(title="106學年各體系碩士各年級比例") +
+  labs(title="各景點前後兩年觀光客人數例") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         panel.background = element_blank(),
