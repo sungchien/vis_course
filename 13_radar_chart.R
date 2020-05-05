@@ -15,6 +15,7 @@
 library(tidyverse)
 library(readxl)
 library(ggplot2)
+library(fmsb)
 
 # 資料輸入
 sightseeing <- read_excel("sightseeing.xlsx")
@@ -30,119 +31,30 @@ sightseeing <- read_excel("sightseeing.xlsx")
 sightseeing <- sightseeing %>%
   mutate(fchi=regexpr("\r\n", 地點)) %>%
   mutate(loc=substr(地點, 1, fchi-1)) %>%
-  select(2, 3, 5) %>%
-  gather(key="year", value="visitorCount", -loc)
-
-loc_rank <- sightseeing %>%
-  filter(year=="2019二月") %>%
-  arrange(desc(visitorCount)) %>%
-  pull(loc)
+  select(2, 3, 5) 
 
 sightseeing <- sightseeing %>%
-  mutate(year=factor(year)) %>%
-  mutate(loc=factor(loc, levels=loc_rank, ordered = TRUE)) %>%
-  arrange(year, loc)
+  column_to_rownames("loc") %>%
+  t()
 
-# 群組長條圖
-ggplot(sightseeing, aes(x=loc, y=visitorCount)) +
-  geom_col(aes(color=year, fill=year), alpha=0.3, position="dodge") +
-  labs(title="各景點前後兩年觀光客人數", x="景點", y="觀光客人數") +
-  scale_y_continuous(breaks=seq(0, 1000000, 200000))+
-  theme(axis.text.x = element_text(color="black", angle=60, hjust=1),
-        axis.text.y = element_text(color="black"),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.major.y = element_line(color="grey50"),
-        panel.grid.minor.y = element_line(color="grey80"))
+sightseeing <- sightseeing %>%
+  as.data.frame()
+# To use the fmsb package, I have to add 2 lines to the dataframe: the max and min of each variable to show on the plot!
+sightseeing <- rbind(rep(1000000,7) , rep(0,7) , sightseeing)
 
-# 雷達圖
-# Define a new coordinate system 
-coord_radar <- function () 
-{
-  ggproto("CoordRadar", CoordPolar, theta = "x", r = "y", start = 0, 
-          direction = 1,
-          is_linear = function(coord) TRUE)
-}
+# Set graphic colors
+library(RColorBrewer)
+colors_border <- brewer.pal(2, "Set2")
+library(scales)
+colors_in <- alpha(colors_border,0.3)
 
-# 畫出雷達圖
-ggplot(sightseeing, aes(x=loc, y=visitorCount, group=year)) + 
-  geom_polygon(aes(color=year, fill=year), alpha=0.3) +
-  coord_radar() +
-  labs(title="各景點前後兩年觀光客人數") +
-  scale_y_continuous(breaks=seq(0, 1000000, 200000))+
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_line(color="grey50"),
-        panel.grid.major.y = element_line(color="grey50"),
-        axis.title=element_blank())
+radarchart(sightseeing, axistype=1,
+           pcol=colors_border, pfcol=colors_in, plwd=2 , plty=1,
+           cglcol="grey", cglty=1,
+           axislabcol="black", caxislabels=seq(0,1000000,200000), cglwd=0.8,
+           vlcex=0.6)
 
-########################################################################
-# 示範案例
-# 比較106學年各體系不同性別碩士各年級人數比例
-# 個體：各體系碩士學生
-# 類別屬性一：各體系
-# 類別屬性二：年級
-# 類別屬性二：性別
-# 數值屬性：人數比例
-std <- tdf %>%
-  filter(year==106) %>%             # 取出106學年資料
-  filter(grepl("M", 等級別)) %>%    # 取出碩士班資料
-  mutate(sex=substr(key, 4, 5)) %>% # 產生性別屬性
-  mutate(grade=substr(key, 1, 3)) %>% # 產生年級屬性
-  mutate(grade=ifelse(grepl("[五六七延]", grade), "五年級(以上)", grade)) %>%
-  mutate(grade=factor(grade, levels=grade_lvl, ordered=TRUE)) %>%
-  group_by(sex, 體系別, grade) %>%    # 統計各體系不同性別的各年級人數
-  summarise(value.sum=sum(value)) %>%
-  ungroup() %>%
-  group_by(sex, 體系別) %>%           # 計算各體系不同性別下各年級人數比例
-  mutate(rate=value.sum/sum(value.sum)) %>%
-  ungroup()
-
-# 畫出雷達圖
-ggplot(std, aes(x=grade, y=rate, group=體系別)) + 
-  geom_polygon(aes(color=體系別), fill=NA) +
-  coord_radar() +
-  facet_wrap(~sex) +
-  labs(title="106學年各體系碩士各年級比例") +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_line(color="grey50"),
-        panel.grid.major.y = element_line(color="grey50"),
-        axis.title=element_blank())
-
-########################################################################
-# 示範案例
-# 比較106學年各體系不同性別碩士各年級人數比例
-# 個體：各體系碩士學生
-# 類別屬性一：各體系
-# 類別屬性二：年級
-# 類別屬性二：性別
-# 數值屬性：人數比例
-std <- tdf %>%
-  filter(year==106) %>%             # 取出106學年資料
-  filter(grepl("M", 等級別)) %>%      # 取出碩士班資料
-  mutate(sex=substr(key, 4, 5)) %>%   # 產生性別屬性
-  mutate(grade=substr(key, 1, 3)) %>% # 產生年級屬性
-  mutate(grade=ifelse(grepl("[五六七延]", grade), "五年級(以上)", grade)) %>%
-  mutate(grade=factor(grade, levels=grade_lvl, ordered=TRUE)) %>%
-  group_by(dn, sex, 體系別, grade) %>%   # 統計各體系不同性別、不同學制的各年級人數
-  summarise(value.sum=sum(value)) %>%
-  ungroup() %>%
-  group_by(dn, sex, 體系別) %>%    # 計算各體系不同性別、不同學制下各年級人數比例
-  mutate(rate=value.sum/sum(value.sum)) %>%
-  ungroup()
-
-# 畫出雷達圖
-ggplot(std, aes(x=grade, y=rate, group=體系別)) + 
-  geom_polygon(aes(color=體系別), fill=NA) +
-  coord_radar() +
-  facet_grid(rows=vars(dn), cols=vars(sex)) +
-  labs(title="106學年各體系碩士各年級比例") +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_line(color="grey50"),
-        panel.grid.major.y = element_line(color="grey50"),
-        axis.title=element_blank())
+# Add a legend
+legend(x=0.7, y=-0.5,
+       legend = rownames(sightseeing[-c(1,2),]), bty = "n",
+       pch=20 , col=colors_border , text.col = "black", cex=0.5, pt.cex=2)
