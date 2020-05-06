@@ -43,15 +43,17 @@ sightseeing <- sightseeing %>%
 sightseeing <- rbind(rep(1000000,7) , rep(0,7) , sightseeing)
 
 # Set graphic colors
-library(RColorBrewer)
-colors_border <- brewer.pal(2, "Set2")
+#library(RColorBrewer)
+#colors_border <- brewer.pal(2, "Set2")
+colors_border <- c("#3a66cb", "#0ebeba")
 library(scales)
 colors_in <- alpha(colors_border,0.3)
 
-radarchart(sightseeing, axistype=1,
+clabels = sprintf("%d", seq(0,1000000,200000))
+radarchart(sightseeing, axistype=1, centerzero=TRUE, seg=5,
            pcol=colors_border, pfcol=colors_in, plwd=2 , plty=1,
            cglcol="grey", cglty=1,
-           axislabcol="black", caxislabels=seq(0,1000000,200000), cglwd=0.8,
+           axislabcol="black", caxislabels=clabels, cglwd=0.8, calcex=0.6,
            vlcex=0.6)
 
 # Add a legend
